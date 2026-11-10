@@ -83,7 +83,7 @@ Run the unit tests:
 - [x] **Phase 1: POS and receipt printer.** Order entry, ESC/POS encoding, simulated and
       Bluetooth printers, failure handling, unit tests.
 - [x] Kitchen ticket printed alongside the customer receipt.
-- [ ] CI on GitHub Actions running the unit tests on every push.
+- [x] CI on GitHub Actions running the unit tests on every push.
 - [ ] **Phase 2: Kitchen display (KDS) that works offline.** A second device finds the POS on
       the local network with Android network service discovery (NSD) and receives orders
       through a small web server embedded in the app, with no internet connection.
