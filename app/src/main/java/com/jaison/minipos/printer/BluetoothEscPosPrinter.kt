@@ -3,6 +3,7 @@ package com.jaison.minipos.printer
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,8 @@ class BluetoothEscPosPrinter(
 
     val address: String get() = device.address
 
+    // Read on IO threads and closed from the main thread (when the user switches printers).
+    @Volatile
     private var socket: BluetoothSocket? = null
     private val _status = MutableStateFlow(PrinterStatus.DISCONNECTED)
     override val status: StateFlow<PrinterStatus> = _status.asStateFlow()
@@ -60,8 +63,8 @@ class BluetoothEscPosPrinter(
             val output = current.outputStream
             // Many inexpensive printers have small buffers and silently drop bytes if a
             // whole receipt arrives at once, so send it in chunks with a short pause.
-            data.toList().chunked(CHUNK_SIZE).forEach { chunk ->
-                output.write(chunk.toByteArray())
+            data.inChunksOf(CHUNK_SIZE).forEach { chunk ->
+                output.write(chunk)
                 output.flush()
                 delay(CHUNK_PAUSE_MS)
             }
@@ -71,6 +74,13 @@ class BluetoothEscPosPrinter(
             closeQuietly()
             _status.value = PrinterStatus.ERROR
             PrintResult.Failure(PrinterError.IO_ERROR, e.message)
+        } catch (e: CancellationException) {
+            // Cancelled halfway through a receipt: the printer holds a partial job and we
+            // cannot know how much arrived. Drop the connection so the next print starts
+            // from a clean reconnect, instead of leaving the status stuck on PRINTING.
+            closeQuietly()
+            _status.value = PrinterStatus.ERROR
+            throw e
         }
     }
 

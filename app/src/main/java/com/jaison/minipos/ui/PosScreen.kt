@@ -39,6 +39,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -115,6 +116,7 @@ fun PosScreen(vm: PosViewModel = viewModel()) {
                     )
                     CartPanel(
                         state, onRemoveOne = vm::removeOne, onCheckout = vm::checkout,
+                        onReprintTicket = vm::reprintKitchenTickets,
                         modifier = Modifier.weight(0.4f).fillMaxHeight()
                     )
                 }
@@ -126,6 +128,7 @@ fun PosScreen(vm: PosViewModel = viewModel()) {
                     )
                     CartPanel(
                         state, onRemoveOne = vm::removeOne, onCheckout = vm::checkout,
+                        onReprintTicket = vm::reprintKitchenTickets,
                         modifier = Modifier.weight(1f).fillMaxWidth()
                     )
                 }
@@ -174,6 +177,7 @@ private fun CartPanel(
     state: PosState,
     onRemoveOne: (MenuItem) -> Unit,
     onCheckout: () -> Unit,
+    onReprintTicket: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val order = state.order
@@ -213,6 +217,17 @@ private fun CartPanel(
                     Text("Printing…")
                 } else {
                     Text("Pay & Print  ${order.total.format()}")
+                }
+            }
+            // The sale is already complete; only the kitchen slip is missing.
+            if (state.pendingTickets.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onReprintTicket,
+                    enabled = !state.isPrinting,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Reprint kitchen ticket (${state.pendingTickets.size})")
                 }
             }
         }
@@ -286,6 +301,9 @@ private fun PrinterDialog(vm: PosViewModel, current: ReceiptPrinter, onDismiss: 
                 if (current is FakeReceiptPrinter) {
                     TextButton(onClick = vm::simulatePaperOutOnNextPrint) {
                         Text("Simulate paper out on next print")
+                    }
+                    TextButton(onClick = vm::simulateKitchenTicketFailure) {
+                        Text("Simulate kitchen ticket failure")
                     }
                 }
 

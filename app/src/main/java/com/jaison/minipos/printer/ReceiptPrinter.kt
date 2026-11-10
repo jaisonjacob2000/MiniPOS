@@ -26,6 +26,10 @@ enum class PrinterError(val userMessage: String) {
     NOT_CONNECTED("Printer not connected"),
     PAPER_OUT("Printer is out of paper"),
     IO_ERROR("Lost connection to the printer while printing"),
+    COVER_OPEN("Printer cover is open"),
+
+    /** A device or SDK failed in a way we did not expect (for example it threw). */
+    UNKNOWN("The printer reported an unexpected problem"),
 }
 
 sealed interface PrintResult {

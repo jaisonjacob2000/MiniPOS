@@ -59,6 +59,27 @@ class ReceiptFormatter(
         return Receipt(lines, width)
     }
 
+    /**
+     * The slip for the kitchen: a big order number and what to make. No prices and no totals,
+     * because the people cooking do not need them.
+     */
+    fun kitchenTicket(order: Order, orderNumber: Int, timestamp: String): Receipt {
+        val lines = buildList {
+            add(ReceiptLine("KITCHEN", Align.CENTER, bold = true))
+            add(ReceiptLine(orderLabel(orderNumber), Align.CENTER, bold = true, large = true))
+            add(ReceiptLine(timestamp, Align.CENTER))
+            add(divider())
+            order.lines.forEach { line ->
+                add(ReceiptLine(fit("${line.quantity} x ${line.item.name}"), bold = true))
+            }
+            add(divider())
+        }
+        return Receipt(lines, width)
+    }
+
+    /** Shortens a line that is too long for the paper, marking the cut with a dot. */
+    private fun fit(text: String) = if (text.length <= width) text else text.take(width - 1) + "."
+
     fun orderLabel(orderNumber: Int) = "Order #" + orderNumber.toString().padStart(4, '0')
 
     fun divider() = ReceiptLine("-".repeat(width))

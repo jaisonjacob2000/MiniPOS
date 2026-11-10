@@ -24,6 +24,12 @@ class FakeReceiptPrinter(
     /** If set, the next print fails with this error, then the flag clears. */
     var failNextPrint: PrinterError? = null
 
+    /**
+     * How many prints succeed before [failNextPrint] takes effect. 0 fails the very next
+     * print; 1 lets the customer receipt through and fails the kitchen ticket behind it.
+     */
+    var printsBeforeFailure: Int = 0
+
     /** If true, connect() fails, as if the printer were switched off. */
     var refuseConnection: Boolean = false
 
@@ -48,9 +54,13 @@ class FakeReceiptPrinter(
         _status.value = PrinterStatus.PRINTING
         delay(delayMs)
         failNextPrint?.let { error ->
-            failNextPrint = null
-            _status.value = PrinterStatus.ERROR
-            return PrintResult.Failure(error, "Simulated failure")
+            if (printsBeforeFailure > 0) {
+                printsBeforeFailure--
+            } else {
+                failNextPrint = null
+                _status.value = PrinterStatus.ERROR
+                return PrintResult.Failure(error, "Simulated failure")
+            }
         }
         printedJobs += data.copyOf()
         _status.value = PrinterStatus.READY

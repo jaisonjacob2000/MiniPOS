@@ -30,6 +30,7 @@ class PosViewModel(app: Application) : AndroidViewModel(app) {
 
     private val controller = PosController(
         initialPrinter = simulatedPrinter,
+        printKitchenTickets = true,
         timestamp = { LocalDateTime.now().format(TIMESTAMP_FORMAT) },
     )
 
@@ -47,10 +48,22 @@ class PosViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { controller.checkout() }
     }
 
+    /** Prints kitchen tickets that did not print the first time. */
+    fun reprintKitchenTickets() {
+        viewModelScope.launch { controller.reprintKitchenTickets() }
+    }
+
     fun useSimulatedPrinter() = controller.usePrinter(simulatedPrinter)
 
     /** Demo helper: make the simulated printer fail once, to show the order is kept. */
     fun simulatePaperOutOnNextPrint() {
+        simulatedPrinter.printsBeforeFailure = 0
+        simulatedPrinter.failNextPrint = PrinterError.PAPER_OUT
+    }
+
+    /** Demo helper: the customer receipt prints, then the kitchen ticket fails. */
+    fun simulateKitchenTicketFailure() {
+        simulatedPrinter.printsBeforeFailure = 1
         simulatedPrinter.failNextPrint = PrinterError.PAPER_OUT
     }
 
